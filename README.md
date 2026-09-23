@@ -97,3 +97,10 @@ These numbers are specific to this machine/run and are not a universal ranking o
 5. **High-cardinality or poorly-localized partition key?** If a partition key has extremely high cardinality (e.g. partitioning by exact timestamp instead of year/month), the pipeline ends up creating an enormous number of tiny partition folders/files. This increases filesystem/metadata overhead, makes directory listing and query planning slower, and can leave many partitions with very few rows, which defeats the purpose of partitioning (reducing I/O) since the overhead of opening many small files can exceed the savings from skipping irrelevant data.
 
 Git checkpoint: branch `goal3-storage-benchmark`, commit `feat: implement Goal 3 storage benchmarking and partitioning`.
+
+## Goal 4  Airflow 
+
+- Add execution_timeout to prevent hung tasks
+- Branch load task on run_mode param (full vs partition)
+- Add detailed failure_callback with run_id and exception context
+- Verified: full run, partition run (audit.partition_loads), deliberate failure + retry + recovery
