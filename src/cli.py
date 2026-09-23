@@ -1,12 +1,13 @@
 import argparse
 
-from src.config import PROJECT_ROOT, DB, SETTINGS
+from src.config import PROJECT_ROOT, DB, SETTINGS, path_for
 from src.common.audit import new_run_id
 from src.extract.files import extract_sources
 from src.transform.staging import build_staging
 from src.transform.curated import build_curated
 from src.load.postgres import upsert_curated, load_partition
 from src.validate.quality import validate_curated
+from src.benchmark.storage import run_benchmark, write_partitioned_parquet
 
 
 def _run_pipeline(run_id):
@@ -74,14 +75,13 @@ def main():
         curated = _run_pipeline(run_id)
         errors = validate_curated(curated)
         count = upsert_curated(curated, run_id)
+        write_partitioned_parquet(curated, path_for('partition_dir'))
         print('Run ID:', run_id)
         print('Curated rows:', len(curated))
         print('Validation errors:', errors or 'none')
         print('Upserted rows:', count)
 
     elif args.command == 'benchmark':
-        from src.benchmark.storage import run_benchmark
-        from src.config import path_for
         curated_path = path_for('curated_dir') / 'sales_order_lines.parquet'
         run_benchmark(curated_path, path_for('benchmark_dir'), repeats=args.repeats)
 
