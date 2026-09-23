@@ -9,3 +9,5 @@ data/quarantine/
 data/benchmarks/
 data/partitioned/
 .DS_Store
+
+logs/
