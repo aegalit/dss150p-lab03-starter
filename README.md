@@ -33,3 +33,13 @@ docker compose -f docker-compose.yml -f docker-compose.airflow.yml up airflow-in
 docker compose -f docker-compose.yml -f docker-compose.airflow.yml up -d airflow-webserver airflow-scheduler
 ```
 Airflow UI: http://localhost:8080 (training credentials: admin/admin; change if reused outside the lab).
+
+## Goal 1 — Reproducible Environment
+
+- Local Python: 3.12.1 (see `.venv`), installed via `python -m venv .venv` and `pip install -r requirements.txt`
+- Virtual environment (`.venv/`) is git-ignored; not committed. Committing it would tie the repo to one machine's binary paths and compiled dependencies, breaking reproducibility on another machine. `requirements.txt` pins exact versions so anyone can rebuild an equivalent environment.
+- Secrets/config: `config/settings.yml` holds non-secret defaults; `.env` (git-ignored) holds environment-specific values (DB host/user/password); `src/config.py` is the only place merging them.
+- Verified locally: `python -m src.cli validate-env`
+- Verified in Docker: `docker compose build pipeline`, `docker compose up -d postgres`, `docker compose run --rm pipeline python -m src.cli validate-env`
+- Verified PostgreSQL schemas: `audit`, `curated`, `staging` created; `curated.sales_order_lines` table exists
+- Git checkpoint: branch `goal1-reproducible-environment`, commit `feat: add reproducible pipeline environment`
