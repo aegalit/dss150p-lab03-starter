@@ -7,6 +7,7 @@ from src.transform.staging import build_staging
 from src.transform.curated import build_curated
 from src.load.postgres import upsert_curated, load_partition
 from src.validate.quality import validate_curated
+from src.validate.environment import run_checks
 from src.benchmark.storage import run_benchmark, write_partitioned_parquet
 
 
@@ -20,7 +21,8 @@ def _run_pipeline(run_id):
 def main():
     parser = argparse.ArgumentParser(description='DSS150P modular pipeline')
     sub = parser.add_subparsers(dest='command', required=True)
-    sub.add_parser('validate-env')
+    env = sub.add_parser('validate-env')
+    env.add_argument('--require-db', action='store_true')
     sub.add_parser('extract')
     sub.add_parser('transform')
     sub.add_parser('load')
@@ -34,6 +36,14 @@ def main():
         print('PROJECT_ROOT=', PROJECT_ROOT)
         print('DB host/database=', DB['host'], DB['dbname'])
         print('Configured source=', SETTINGS['pipeline']['source_dir'])
+        results, failed = run_checks(require_db=args.require_db)
+        for name, ok, detail in results:
+            status = 'OK  ' if ok else ('FAIL' if name in failed else 'WARN')
+            print(f'{status} {name}: {detail}')
+        if failed:
+            print('Environment check failed:', ', '.join(failed))
+            raise SystemExit(1)
+        print('Environment check passed')
         return
 
     run_id = new_run_id()
